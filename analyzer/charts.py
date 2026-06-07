@@ -25,7 +25,7 @@ def response_codes_timeseries(piv: pd.DataFrame) -> go.Figure:
                 line=dict(color=_STATUS_COLORS.get(col)),
             )
         )
-    fig.update_layout(title="Response Codes Over Time", xaxis_title="", yaxis_title="Events", height=380, legend_orientation="h")
+    fig.update_layout(title="Response Codes Over Time", xaxis_title="", yaxis_title="Events", height=460, legend_orientation="h", margin=dict(t=50, b=10, l=10, r=10))
     return fig
 
 
@@ -33,7 +33,7 @@ def events_timeseries(df: pd.DataFrame) -> go.Figure:
     daily = df.dropna(subset=["date"]).groupby("date").size().reset_index(name="events")
     fig = px.line(daily, x="date", y="events", markers=True, title="Events Per Day")
     fig.update_traces(line_color="#ff5722")
-    fig.update_layout(height=380, xaxis_title="", yaxis_title="Events")
+    fig.update_layout(height=460, xaxis_title="", yaxis_title="Events", margin=dict(t=50, b=10, l=10, r=10))
     return fig
 
 
@@ -55,7 +55,7 @@ def response_code_pie(df: pd.DataFrame) -> go.Figure:
             hole=0.4,
         )
     )
-    fig.update_layout(title="Response Code Share", height=380)
+    fig.update_layout(title="Response Code Share", height=460, margin=dict(t=50, b=10, l=10, r=10), showlegend=True)
     return fig
 
 

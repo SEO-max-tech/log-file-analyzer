@@ -16,6 +16,22 @@ from analyzer.parser import ALL_FORMATS, parse_log
 
 st.set_page_config(page_title="SEO Log File Analyzer", layout="wide", page_icon="🪵")
 
+st.markdown(
+    """
+    <style>
+      /* Tighter, smaller metric cards */
+      [data-testid="stMetricValue"] { font-size: 1.35rem; line-height: 1.2; }
+      [data-testid="stMetricLabel"] p { font-size: 0.78rem; opacity: 0.7; }
+      [data-testid="stMetric"] { padding: 0.15rem 0; }
+      /* Smaller page title */
+      h1 { font-size: 1.9rem !important; }
+      /* Reduce gap between metric rows */
+      div[data-testid="stHorizontalBlock"] { gap: 0.6rem; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 @st.cache_data(show_spinner=False)
 def _parse(path: str, fmt: str, regex: str | None, fields: tuple | None, unit: str | None):
@@ -138,7 +154,8 @@ tabs = st.tabs(
 with tabs[0]:
     ov = metrics.overview(df)
     metric_grid(ov)
-    c1, c2 = st.columns(2)
+    st.divider()
+    c1, c2 = st.columns([2, 1])
     with c1:
         st.plotly_chart(charts.response_codes_timeseries(metrics.events_timeseries(df)), use_container_width=True, key="ov_rc_ts")
     with c2:
