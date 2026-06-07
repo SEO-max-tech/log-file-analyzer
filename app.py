@@ -140,9 +140,9 @@ with tabs[0]:
     metric_grid(ov)
     c1, c2 = st.columns(2)
     with c1:
-        st.plotly_chart(charts.response_codes_timeseries(metrics.events_timeseries(df)), use_container_width=True)
+        st.plotly_chart(charts.response_codes_timeseries(metrics.events_timeseries(df)), use_container_width=True, key="ov_rc_ts")
     with c2:
-        st.plotly_chart(charts.response_code_pie(df), use_container_width=True)
+        st.plotly_chart(charts.response_code_pie(df), use_container_width=True, key="ov_rc_pie")
 
 with tabs[1]:
     st.subheader("URLs")
@@ -151,7 +151,7 @@ with tabs[1]:
 with tabs[2]:
     st.subheader("Response Codes")
     st.dataframe(metrics.by_response_code(df), use_container_width=True, hide_index=True)
-    st.plotly_chart(charts.response_codes_timeseries(metrics.events_timeseries(df)), use_container_width=True)
+    st.plotly_chart(charts.response_codes_timeseries(metrics.events_timeseries(df)), use_container_width=True, key="rc_ts")
 
 with tabs[3]:
     st.subheader("User Agents")
@@ -161,7 +161,7 @@ with tabs[3]:
         st.subheader("Bot Verification")
         st.dataframe(vs, use_container_width=True, hide_index=True)
         if do_verify:
-            st.plotly_chart(charts.bots_timeseries(df[df["is_bot"]]), use_container_width=True)
+            st.plotly_chart(charts.bots_timeseries(df[df["is_bot"]]), use_container_width=True, key="ua_bots_ts")
     else:
         st.caption("Enable **Verify bots** in the sidebar for reverse-DNS verification status.")
 
@@ -185,7 +185,7 @@ with tabs[7]:
         with col1:
             st.dataframe(cs[["rank", "country", "num_events", "num_events_pct"]], use_container_width=True, hide_index=True)
         with col2:
-            st.plotly_chart(charts.country_choropleth(cs), use_container_width=True)
+            st.plotly_chart(charts.country_choropleth(cs), use_container_width=True, key="geo_map")
     else:
         st.info("Enable **Geolocate IPs** in the sidebar to populate this tab.")
 
@@ -196,6 +196,6 @@ with tabs[8]:
 
 with tabs[9]:
     st.subheader("Events")
-    st.plotly_chart(charts.events_timeseries(df), use_container_width=True)
+    st.plotly_chart(charts.events_timeseries(df), use_container_width=True, key="ev_ts")
     if do_verify or "is_bot" in df:
-        st.plotly_chart(charts.bots_timeseries(df[df["is_bot"]]), use_container_width=True)
+        st.plotly_chart(charts.bots_timeseries(df[df["is_bot"]]), use_container_width=True, key="ev_bots_ts")
