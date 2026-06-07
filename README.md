@@ -22,6 +22,14 @@ Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (chart
 - **Compare Bots** — every bot's crawl footprint side by side, plus a top-URLs × bot
   coverage matrix that reveals which pages a bot never touches.
 
+**AI crawler breakdown + cascading filters**
+
+![AI crawler detection with vendor/category breakdown and sidebar filters](docs/ai-crawlers.png)
+
+**Compare Bots — footprints side by side + coverage matrix**
+
+![Compare Bots tab](docs/compare-bots.png)
+
 ## Features
 
 | Tab | What it shows |
