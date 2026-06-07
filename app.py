@@ -138,12 +138,52 @@ if do_geo:
     with st.spinner("Geolocating IPs…"):
         df = _geo(df)
 
+# ------------------------------------------------------------------ global filter
+st.sidebar.divider()
+st.sidebar.subheader("Filter (applies to all tabs)")
+ua_options = ["All bots & users"] + sorted(df["ua_label"].unique().tolist())
+sel_ua = st.sidebar.selectbox("User agent / bot", ua_options)
+bots_only = st.sidebar.checkbox("Bots only", value=False)
+ver_present = [
+    v for v in ["verified", "spoofed", "not_checked", "error", "not_applicable"]
+    if v in set(df["verification"].unique())
+]
+sel_ver = st.sidebar.selectbox(
+    "Verification status", ["All"] + ver_present,
+    help="Enable 'Verify bots' above to populate verified/spoofed.",
+)
+
+parsed_total = n_lines - n_errors
+df_all = df  # unfiltered (used for the full User Agents listing)
+
+fdf = df
+if sel_ua != "All bots & users":
+    fdf = fdf[fdf["ua_label"] == sel_ua]
+if bots_only:
+    fdf = fdf[fdf["is_bot"]]
+if sel_ver != "All":
+    fdf = fdf[fdf["verification"] == sel_ver]
+df = fdf
+
 st.title("SEO Log File Analyzer")
+
+if df.empty:
+    st.warning("No events match the current filter. Loosen the filter in the sidebar.")
+    st.stop()
+
 dmin = df["datetime"].min()
 dmax = df["datetime"].max()
+active_filters = []
+if sel_ua != "All bots & users":
+    active_filters.append(sel_ua)
+if bots_only:
+    active_filters.append("bots only")
+if sel_ver != "All":
+    active_filters.append(f"verification={sel_ver}")
+filter_note = f" · filter: {', '.join(active_filters)}" if active_filters else ""
 st.caption(
-    f"**{n_lines:,}** lines · **{n_errors:,}** unparsed · range "
-    f"{dmin:%Y-%m-%d} → {dmax:%Y-%m-%d} · timezone UTC"
+    f"**{len(df):,}** events shown of **{parsed_total:,}** parsed · {n_errors:,} unparsed · "
+    f"range {dmin:%Y-%m-%d} → {dmax:%Y-%m-%d} · UTC{filter_note}"
 )
 
 tabs = st.tabs(
@@ -163,7 +203,15 @@ with tabs[0]:
 
 with tabs[1]:
     st.subheader("URLs")
-    st.dataframe(metrics.by_url(df), use_container_width=True, hide_index=True)
+    url_table = metrics.by_url(df)
+    st.dataframe(url_table, use_container_width=True, hide_index=True)
+    st.download_button(
+        "⬇ Download URL list (CSV)",
+        url_table.to_csv(index=False).encode(),
+        file_name="crawled_urls.csv",
+        mime="text/csv",
+        key="dl_urls",
+    )
 
 with tabs[2]:
     st.subheader("Response Codes")
@@ -172,13 +220,14 @@ with tabs[2]:
 
 with tabs[3]:
     st.subheader("User Agents")
-    st.dataframe(bots.user_agent_summary(df), use_container_width=True, hide_index=True)
-    vs = bots.verification_summary(df)
+    st.caption("Full breakdown (ignores the sidebar filter — use it to pick which bot to drill into).")
+    st.dataframe(bots.user_agent_summary(df_all), use_container_width=True, hide_index=True)
+    vs = bots.verification_summary(df_all)
     if not vs.empty:
         st.subheader("Bot Verification")
         st.dataframe(vs, use_container_width=True, hide_index=True)
         if do_verify:
-            st.plotly_chart(charts.bots_timeseries(df[df["is_bot"]]), use_container_width=True, key="ua_bots_ts")
+            st.plotly_chart(charts.bots_timeseries(df_all[df_all["is_bot"]]), use_container_width=True, key="ua_bots_ts")
     else:
         st.caption("Enable **Verify bots** in the sidebar for reverse-DNS verification status.")
 
