@@ -187,7 +187,7 @@ st.caption(
 )
 
 tabs = st.tabs(
-    ["Overview", "URLs", "Response Codes", "User Agents", "Referers",
+    ["Overview", "URLs", "Response Codes", "User Agents", "Compare Bots", "Referers",
      "Directories", "IPs", "Countries", "Bytes", "Events"]
 )
 
@@ -232,18 +232,35 @@ with tabs[3]:
         st.caption("Enable **Verify bots** in the sidebar for reverse-DNS verification status.")
 
 with tabs[4]:
+    st.subheader("Compare Bots")
+    st.caption("Crawl footprint of each bot side by side (ignores the sidebar filter).")
+    comp = metrics.bot_comparison(df_all)
+    if comp.empty:
+        st.info("No bot traffic detected in this log.")
+    else:
+        st.dataframe(comp, use_container_width=True, hide_index=True)
+        st.download_button(
+            "⬇ Download comparison (CSV)", comp.to_csv(index=False).encode(),
+            file_name="bot_comparison.csv", mime="text/csv", key="dl_compare",
+        )
+        st.markdown("**Crawl coverage — top URLs × bot** (who hits what)")
+        st.caption("Counts per URL per bot. Zeros reveal pages a bot never crawled.")
+        matrix = metrics.url_bot_matrix(df_all, top_n=25)
+        st.dataframe(matrix, use_container_width=True, hide_index=True)
+
+with tabs[5]:
     st.subheader("Referers")
     st.dataframe(metrics.by_referer(df), use_container_width=True, hide_index=True)
 
-with tabs[5]:
+with tabs[6]:
     st.subheader("Directories")
     st.dataframe(metrics.by_directory(df), use_container_width=True, hide_index=True)
 
-with tabs[6]:
+with tabs[7]:
     st.subheader("IPs")
     st.dataframe(metrics.by_ip(df), use_container_width=True, hide_index=True)
 
-with tabs[7]:
+with tabs[8]:
     st.subheader("Countries")
     if do_geo and "country" in df:
         cs = geo.country_summary(df)
@@ -255,12 +272,12 @@ with tabs[7]:
     else:
         st.info("Enable **Geolocate IPs** in the sidebar to populate this tab.")
 
-with tabs[8]:
+with tabs[9]:
     st.subheader("Bytes")
     bytes_df = metrics.by_url(df).sort_values("total_bytes", ascending=False)
     st.dataframe(bytes_df, use_container_width=True, hide_index=True)
 
-with tabs[9]:
+with tabs[10]:
     st.subheader("Events")
     st.plotly_chart(charts.events_timeseries(df), use_container_width=True, key="ev_ts")
     if do_verify or "is_bot" in df:

@@ -16,6 +16,7 @@ Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (chart
 | **URLs** | Per-URL events, bytes, CO2, avg response time |
 | **Response Codes** | Counts by status code + time-series by class (2xx/3xx/4xx/5xx) |
 | **User Agents** | Per-UA crawl breakdown + **bot verification** (real Googlebot/Bingbot vs spoofers) |
+| **Compare Bots** | Crawl footprint of each bot side by side + top-URLs × bot coverage matrix (who hits what, who skips what) |
 | **Referers** | Referrer breakdown |
 | **Directories** | Crawl rolled up by top-level path |
 | **IPs** | Per-IP event + byte counts |

@@ -114,6 +114,49 @@ def by_referer(df: pd.DataFrame) -> pd.DataFrame:
     return g.sort_values("num_events", ascending=False).reset_index(drop=True)
 
 
+def bot_comparison(df: pd.DataFrame, bots_only: bool = True) -> pd.DataFrame:
+    """One row per user-agent/bot label: crawl footprint side by side."""
+    src = df[df["is_bot"]] if bots_only and "is_bot" in df else df
+    if src.empty:
+        return pd.DataFrame()
+    rows = []
+    total = len(src)
+    days = src["date"].nunique() or 1
+    for label, g in src.groupby("ua_label"):
+        n = len(g)
+        tb = int(g["size"].sum())
+        errors = int(g["status_class"].isin([4, 5]).sum())
+        row = {
+            "bot": label,
+            "events": n,
+            "events_pct": round(100 * n / total, 2),
+            "unique_urls": g["path"].nunique(),
+            "events_per_day": round(n / days, 2),
+            "total_bytes": tb,
+            "errors": errors,
+            "errors_pct": round(100 * errors / n, 2) if n else 0,
+        }
+        if g["time_taken_ms"].notna().any():
+            row["avg_response_ms"] = int(g["time_taken_ms"].mean())
+        if "verification" in g:
+            row["verified_pct"] = round(100 * (g["verification"] == "verified").sum() / n, 2) if n else 0
+        rows.append(row)
+    return pd.DataFrame(rows).sort_values("events", ascending=False).reset_index(drop=True)
+
+
+def url_bot_matrix(df: pd.DataFrame, top_n: int = 25, bots_only: bool = True) -> pd.DataFrame:
+    """Top URLs (rows) x bot labels (cols) = event counts. Shows crawl overlap/gaps."""
+    src = df[df["is_bot"]] if bots_only and "is_bot" in df else df
+    if src.empty:
+        return pd.DataFrame()
+    top_urls = src["path"].value_counts().head(top_n).index
+    sub = src[src["path"].isin(top_urls)]
+    matrix = sub.pivot_table(index="path", columns="ua_label", aggfunc="size", fill_value=0)
+    matrix["Total"] = matrix.sum(axis=1)
+    matrix = matrix.sort_values("Total", ascending=False)
+    return matrix.reset_index().rename(columns={"path": "URL"})
+
+
 def events_timeseries(df: pd.DataFrame, by: str = "status_class") -> pd.DataFrame:
     """Daily event counts, pivoted by status class (for the response-code chart)."""
     t = df.dropna(subset=["date"]).copy()
