@@ -6,6 +6,8 @@ IPs, and geolocation — in an interactive Streamlit dashboard.
 
 Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (charts) + **Streamlit** (UI).
 
+![SEO Log File Analyzer dashboard](docs/screenshot.png)
+
 ## Features
 
 | Tab | What it shows |
