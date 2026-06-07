@@ -1,0 +1,5 @@
+advertools>=0.17
+pandas>=2.0
+plotly>=5.20
+streamlit>=1.30
+requests>=2.30
