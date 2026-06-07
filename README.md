@@ -8,6 +8,20 @@ Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (chart
 
 ![SEO Log File Analyzer dashboard](docs/screenshot.png)
 
+## ✨ Highlights
+
+- **AI crawler detection** — spots and verifies OpenAI (GPTBot, ChatGPT-User…),
+  Anthropic (ClaudeBot…), Perplexity, Google AI, Meta, Amazon, ByteDance, Common
+  Crawl, and more — each tagged by vendor and purpose (training / search / user-fetch).
+  See exactly which AI bots crawl your site and how much.
+- **Genuine-bot verification** — confirms a bot is real, not a spoofer: reverse+forward
+  DNS for search engines, official published IP-range (CIDR) checks for AI crawlers
+  that don't support reverse DNS.
+- **Cascading filters** — slice the whole dashboard by Category → Vendor → User agent
+  in one click (e.g. "show me every AI Training bot", or "just Googlebot, verified only").
+- **Compare Bots** — every bot's crawl footprint side by side, plus a top-URLs × bot
+  coverage matrix that reveals which pages a bot never touches.
+
 ## Features
 
 | Tab | What it shows |
