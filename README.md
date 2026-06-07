@@ -33,9 +33,21 @@ Results cached in `.cache/bot_verify.json`.
 IP → country via the free [ip-api.com](http://ip-api.com) batch endpoint (no API key,
 ~15 batch requests/min). Cached in `.cache/geo.json`. Private IPs are skipped.
 
-## Setup
+## Quick start
+
+Clone, install, and run in one line:
 
 ```bash
+git clone https://github.com/SEO-max-tech/log-file-analyzer.git && cd log-file-analyzer && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && streamlit run app.py
+```
+
+The app opens at `http://localhost:8501` with the bundled sample log pre-loaded.
+
+## Setup (step by step)
+
+```bash
+git clone https://github.com/SEO-max-tech/log-file-analyzer.git
+cd log-file-analyzer
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
