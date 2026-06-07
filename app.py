@@ -128,10 +128,7 @@ if do_verify:
     with st.spinner("Verifying bots (reverse + forward DNS)…"):
         df = _verify(df)
 else:
-    lab = df["user_agent"].apply(bots.classify_ua)
-    df["ua_label"] = lab.apply(lambda t: t[0])
-    df["is_bot"] = lab.apply(lambda t: t[1])
-    df["verify_engine"] = df["ua_label"].apply(bots.verification_engine)
+    df = bots.annotate(df)
     df["verification"] = df["verify_engine"].apply(lambda e: "not_checked" if e else "not_applicable")
 
 if do_geo:
@@ -222,6 +219,13 @@ with tabs[3]:
     st.subheader("User Agents")
     st.caption("Full breakdown (ignores the sidebar filter — use it to pick which bot to drill into).")
     st.dataframe(bots.user_agent_summary(df_all), use_container_width=True, hide_index=True)
+
+    ai = bots.ai_bot_summary(df_all)
+    if not ai.empty:
+        st.subheader("AI Crawlers")
+        st.caption("OpenAI, Anthropic, Perplexity, Google AI, Meta, and others — by vendor & category.")
+        st.dataframe(ai, use_container_width=True, hide_index=True)
+
     vs = bots.verification_summary(df_all)
     if not vs.empty:
         st.subheader("Bot Verification")
