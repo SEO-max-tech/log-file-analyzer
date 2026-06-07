@@ -138,8 +138,20 @@ if do_geo:
 # ------------------------------------------------------------------ global filter
 st.sidebar.divider()
 st.sidebar.subheader("Filter (applies to all tabs)")
-ua_options = ["All bots & users"] + sorted(df["ua_label"].unique().tolist())
+
+cat_options = ["All categories"] + sorted(df["category"].unique().tolist())
+sel_cat = st.sidebar.selectbox(
+    "Category", cat_options,
+    help="e.g. 'AI Training', 'AI Search', 'Search Engine'. Groups bots by purpose.",
+)
+# Vendor + UA options narrow to the chosen category so the dropdowns stay relevant.
+cat_df = df if sel_cat == "All categories" else df[df["category"] == sel_cat]
+vendor_options = ["All vendors"] + sorted(cat_df["vendor"].unique().tolist())
+sel_vendor = st.sidebar.selectbox("Vendor", vendor_options)
+vend_df = cat_df if sel_vendor == "All vendors" else cat_df[cat_df["vendor"] == sel_vendor]
+ua_options = ["All bots & users"] + sorted(vend_df["ua_label"].unique().tolist())
 sel_ua = st.sidebar.selectbox("User agent / bot", ua_options)
+
 bots_only = st.sidebar.checkbox("Bots only", value=False)
 ver_present = [
     v for v in ["verified", "spoofed", "not_checked", "error", "not_applicable"]
@@ -154,6 +166,10 @@ parsed_total = n_lines - n_errors
 df_all = df  # unfiltered (used for the full User Agents listing)
 
 fdf = df
+if sel_cat != "All categories":
+    fdf = fdf[fdf["category"] == sel_cat]
+if sel_vendor != "All vendors":
+    fdf = fdf[fdf["vendor"] == sel_vendor]
 if sel_ua != "All bots & users":
     fdf = fdf[fdf["ua_label"] == sel_ua]
 if bots_only:
@@ -171,6 +187,10 @@ if df.empty:
 dmin = df["datetime"].min()
 dmax = df["datetime"].max()
 active_filters = []
+if sel_cat != "All categories":
+    active_filters.append(sel_cat)
+if sel_vendor != "All vendors":
+    active_filters.append(sel_vendor)
 if sel_ua != "All bots & users":
     active_filters.append(sel_ua)
 if bots_only:
