@@ -39,6 +39,17 @@ USER_AGENTS = {
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 "
         "(KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
     ),
+    # --- AI crawlers ---
+    "GPTBot": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.3; +https://openai.com/gptbot",
+    "ChatGPT-User": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
+    "OAI-SearchBot": "Mozilla/5.0 (compatible; OAI-SearchBot/1.3; +https://openai.com/searchbot)",
+    "ClaudeBot": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)",
+    "Claude-User": "Mozilla/5.0 (compatible; Claude-User/1.0; +Claude-User@anthropic.com)",
+    "PerplexityBot": "Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)",
+    "Bytespider": "Mozilla/5.0 (compatible; Bytespider; spider-feedback@bytedance.com)",
+    "Meta-ExternalAgent": "meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)",
+    "Amazonbot": "Mozilla/5.0 (compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot)",
+    "CCBot": "CCBot/2.0 (https://commoncrawl.org/faq/)",
 }
 
 # (path, weight, typical_bytes, mostly_status)
@@ -112,12 +123,18 @@ def main():
     random.seed(args.seed)
     start = dt.datetime.strptime(args.start, "%Y-%m-%d")
     ua_labels = list(USER_AGENTS.keys())
-    # Bots crawl more than humans in a typical log.
-    ua_weights = [30, 20, 18, 12, 12, 8]
+    # Weights: traditional bots heaviest, humans next, AI crawlers lighter but present.
+    ua_weights = {
+        "Googlebot Desktop": 22, "Googlebot Smartphone": 16, "Bingbot": 14, "Bingbot Mobile": 10,
+        "Human Chrome": 10, "Human Safari iPhone": 7,
+        "GPTBot": 5, "ChatGPT-User": 2, "OAI-SearchBot": 2, "ClaudeBot": 4, "Claude-User": 2,
+        "PerplexityBot": 3, "Bytespider": 3, "Meta-ExternalAgent": 2, "Amazonbot": 2, "CCBot": 2,
+    }
+    weights = [ua_weights.get(lbl, 1) for lbl in ua_labels]
 
     lines = []
     for _ in range(args.events):
-        ua_label = random.choices(ua_labels, weights=ua_weights, k=1)[0]
+        ua_label = random.choices(ua_labels, weights=weights, k=1)[0]
         ua = USER_AGENTS[ua_label]
         ip = pick_ip(ua_label)
         chosen_path = weighted_choice([(r[0], r[1]) for r in URLS])

@@ -25,10 +25,25 @@ Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (chart
 | **Events** | Daily events + per-bot activity over time |
 
 ### Bot verification
-Confirms a self-declared Googlebot/Bingbot is genuine via the official method:
-reverse-DNS the IP → hostname must end in `googlebot.com`/`google.com`/`search.msn.com`
-→ forward-DNS that hostname must resolve back to the same IP. Spoofers are flagged.
-Results cached in `.cache/bot_verify.json`.
+Two methods, picked automatically per bot:
+
+- **Reverse + forward DNS** — for search engines that support it (Googlebot, Bingbot,
+  Applebot, Amazonbot, CCBot, PetalBot). The IP's hostname must end in the official
+  suffix (e.g. `googlebot.com`) and forward-resolve back to the same IP.
+- **Published IP ranges (CIDR)** — for AI crawlers that don't support reverse DNS
+  (OpenAI, Anthropic, Perplexity). The tool downloads each vendor's official IP-range
+  JSON and checks the source IP against it.
+
+Either way, spoofers are flagged. Results cached in `.cache/`.
+
+### AI crawler support
+Detects and classifies AI/LLM crawlers by vendor and category (training / search /
+user-fetch): **OpenAI** (GPTBot, OAI-SearchBot, ChatGPT-User, OAI-AdsBot),
+**Anthropic** (ClaudeBot, Claude-User, Claude-SearchBot), **Perplexity**
+(PerplexityBot, Perplexity-User), **Google** (Google-CloudVertexBot, GoogleOther),
+**Meta**, **Amazon**, **ByteDance** (Bytespider), **Common Crawl** (CCBot), plus
+Cohere, DuckAssistBot, Mistral, You.com, Diffbot, Ai2, and more. Robots-only tokens
+(`Google-Extended`, `Applebot-Extended`) are flagged as anomalies if seen as a UA.
 
 ### Geolocation
 IP → country via the free [ip-api.com](http://ip-api.com) batch endpoint (no API key,
