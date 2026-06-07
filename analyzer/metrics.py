@@ -157,6 +157,67 @@ def url_bot_matrix(df: pd.DataFrame, top_n: int = 25, bots_only: bool = True) ->
     return matrix.reset_index().rename(columns={"path": "URL"})
 
 
+def _slice_dates(df: pd.DataFrame, start, end) -> pd.DataFrame:
+    return df[(df["date"] >= start) & (df["date"] <= end)]
+
+
+def _pct_delta(a: float, b: float) -> float | None:
+    if a == 0:
+        return None  # undefined / new
+    return round(100 * (b - a) / a, 1)
+
+
+def compare_periods(df: pd.DataFrame, a_range: tuple, b_range: tuple) -> dict:
+    """Compare two date ranges. a_range/b_range are (start_date, end_date) inclusive."""
+    A = _slice_dates(df, *a_range)
+    B = _slice_dates(df, *b_range)
+
+    def agg(d):
+        return {
+            "events": len(d),
+            "unique_urls": int(d["path"].nunique()),
+            "total_bytes": int(d["size"].sum()),
+            "errors": int(d["status_class"].isin([4, 5]).sum()),
+            "bots": int(d["is_bot"].sum()) if "is_bot" in d else 0,
+        }
+
+    sa, sb = agg(A), agg(B)
+    summary = []
+    for key, label in [("events", "Total events"), ("bots", "Bot events"),
+                       ("unique_urls", "Unique URLs"), ("total_bytes", "Total bytes"),
+                       ("errors", "Errors (4xx/5xx)")]:
+        summary.append({"metric": label, "period_a": sa[key], "period_b": sb[key],
+                        "delta": sb[key] - sa[key], "delta_pct": _pct_delta(sa[key], sb[key])})
+    summary_df = pd.DataFrame(summary)
+
+    # By bot
+    ba = A[A["is_bot"]].groupby("ua_label").size() if "is_bot" in A else pd.Series(dtype=int)
+    bb = B[B["is_bot"]].groupby("ua_label").size() if "is_bot" in B else pd.Series(dtype=int)
+    by_bot = pd.DataFrame({"events_a": ba, "events_b": bb}).fillna(0).astype(int)
+    by_bot["delta"] = by_bot["events_b"] - by_bot["events_a"]
+    by_bot = by_bot.reset_index().rename(columns={"ua_label": "bot", "index": "bot"}).sort_values("events_b", ascending=False).reset_index(drop=True)
+
+    # Top URL movers (by absolute change)
+    ua = A.groupby("path").size()
+    ub = B.groupby("path").size()
+    by_url = pd.DataFrame({"events_a": ua, "events_b": ub}).fillna(0).astype(int)
+    by_url["delta"] = by_url["events_b"] - by_url["events_a"]
+    by_url = by_url.reset_index().rename(columns={"path": "url"})
+    by_url = by_url.reindex(by_url["delta"].abs().sort_values(ascending=False).index).reset_index(drop=True)
+
+    # By status class
+    rows = []
+    for c in [1, 2, 3, 4, 5]:
+        ca = int((A["status_class"] == c).sum())
+        cb = int((B["status_class"] == c).sum())
+        if ca or cb:
+            rows.append({"status": f"{c}xx", "events_a": ca, "events_b": cb, "delta": cb - ca})
+    by_status = pd.DataFrame(rows)
+
+    return {"summary": summary_df, "by_bot": by_bot, "by_url": by_url, "by_status": by_status,
+            "n_a": len(A), "n_b": len(B)}
+
+
 def events_timeseries(df: pd.DataFrame, by: str = "status_class") -> pd.DataFrame:
     """Daily event counts, pivoted by status class (for the response-code chart)."""
     t = df.dropna(subset=["date"]).copy()
