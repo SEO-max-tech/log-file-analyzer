@@ -5,6 +5,7 @@ Run:
 """
 from __future__ import annotations
 
+import datetime as dt
 import os
 import tempfile
 
@@ -139,6 +140,28 @@ if do_geo:
 st.sidebar.divider()
 st.sidebar.subheader("Filter (applies to all tabs)")
 
+# Date range — presets are relative to the log's latest date (not today).
+data_min = df["date"].min()
+data_max = df["date"].max()
+date_preset = st.sidebar.selectbox(
+    "Date range", ["All time", "Last 1 day", "Last 7 days", "Last 30 days", "Custom"],
+    help="'Last N days' counts back from the most recent date in the log.",
+)
+date_start, date_end = data_min, data_max
+if date_preset == "Last 1 day":
+    date_start = data_max
+elif date_preset == "Last 7 days":
+    date_start = max(data_min, data_max - dt.timedelta(days=6))
+elif date_preset == "Last 30 days":
+    date_start = max(data_min, data_max - dt.timedelta(days=29))
+elif date_preset == "Custom":
+    picked = st.sidebar.date_input(
+        "Custom range", value=(data_min, data_max),
+        min_value=data_min, max_value=data_max,
+    )
+    if isinstance(picked, (tuple, list)) and len(picked) == 2:
+        date_start, date_end = picked
+
 cat_options = ["All categories"] + sorted(df["category"].unique().tolist())
 sel_cat = st.sidebar.selectbox(
     "Category", cat_options,
@@ -166,6 +189,8 @@ parsed_total = n_lines - n_errors
 df_all = df  # unfiltered (used for the full User Agents listing)
 
 fdf = df
+if date_preset != "All time":
+    fdf = fdf[(fdf["date"] >= date_start) & (fdf["date"] <= date_end)]
 if sel_cat != "All categories":
     fdf = fdf[fdf["category"] == sel_cat]
 if sel_vendor != "All vendors":
@@ -187,6 +212,8 @@ if df.empty:
 dmin = df["datetime"].min()
 dmax = df["datetime"].max()
 active_filters = []
+if date_preset != "All time":
+    active_filters.append(f"{date_start} → {date_end}")
 if sel_cat != "All categories":
     active_filters.append(sel_cat)
 if sel_vendor != "All vendors":
@@ -205,7 +232,7 @@ st.caption(
 
 tabs = st.tabs(
     ["Overview", "URLs", "Response Codes", "User Agents", "Compare Bots", "Referers",
-     "Directories", "IPs", "Countries", "Bytes", "Events"]
+     "Directories", "IPs", "Countries", "Bytes", "Events", "Compare Periods"]
 )
 
 with tabs[0]:
@@ -306,3 +333,48 @@ with tabs[10]:
     st.plotly_chart(charts.events_timeseries(df), use_container_width=True, key="ev_ts")
     if do_verify or "is_bot" in df:
         st.plotly_chart(charts.bots_timeseries(df[df["is_bot"]]), use_container_width=True, key="ev_bots_ts")
+
+with tabs[11]:
+    st.subheader("Compare Periods")
+    st.caption("Pick two date ranges to compare crawl activity (ignores the sidebar date filter).")
+    span = (data_max - data_min).days
+    mid = data_min + dt.timedelta(days=span // 2)
+    c1, c2 = st.columns(2)
+    with c1:
+        a_range = st.date_input(
+            "Period A", value=(data_min, mid), min_value=data_min, max_value=data_max, key="cmp_a",
+        )
+    with c2:
+        b_range = st.date_input(
+            "Period B", value=(mid + dt.timedelta(days=1), data_max),
+            min_value=data_min, max_value=data_max, key="cmp_b",
+        )
+
+    valid = (isinstance(a_range, (tuple, list)) and len(a_range) == 2 and
+             isinstance(b_range, (tuple, list)) and len(b_range) == 2)
+    if not valid:
+        st.info("Pick a start and end date for both periods.")
+    else:
+        cmp = metrics.compare_periods(df_all, a_range, b_range)
+        st.caption(f"Period A: {a_range[0]} → {a_range[1]} ({cmp['n_a']:,} events) · "
+                   f"Period B: {b_range[0]} → {b_range[1]} ({cmp['n_b']:,} events)")
+
+        cols = st.columns(len(cmp["summary"]))
+        for col, (_i, row) in zip(cols, cmp["summary"].iterrows()):
+            delta = None if row["delta_pct"] is None else f"{row['delta_pct']:+.1f}%"
+            col.metric(row["metric"], f"{int(row['period_b']):,}", delta=delta)
+
+        st.markdown("**By bot** (A → B)")
+        st.dataframe(cmp["by_bot"], use_container_width=True, hide_index=True)
+
+        cstat, curl = st.columns([1, 2])
+        with cstat:
+            st.markdown("**By status class**")
+            st.dataframe(cmp["by_status"], use_container_width=True, hide_index=True)
+        with curl:
+            st.markdown("**Top URL movers** (biggest change A → B)")
+            st.dataframe(cmp["by_url"].head(25), use_container_width=True, hide_index=True)
+            st.download_button(
+                "⬇ Download URL comparison (CSV)", cmp["by_url"].to_csv(index=False).encode(),
+                file_name="period_comparison.csv", mime="text/csv", key="dl_period",
+            )

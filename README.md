@@ -17,8 +17,9 @@ Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (chart
 - **Genuine-bot verification** — confirms a bot is real, not a spoofer: reverse+forward
   DNS for search engines, official published IP-range (CIDR) checks for AI crawlers
   that don't support reverse DNS.
-- **Cascading filters** — slice the whole dashboard by Category → Vendor → User agent
-  in one click (e.g. "show me every AI Training bot", or "just Googlebot, verified only").
+- **Cascading filters** — slice the whole dashboard by date range (last 1/7/30 days or
+  custom) and by Category → Vendor → User agent in one click (e.g. "every AI Training
+  bot in the last 7 days", or "just Googlebot, verified only").
 - **Compare Bots** — every bot's crawl footprint side by side, plus a top-URLs × bot
   coverage matrix that reveals which pages a bot never touches.
 
@@ -39,6 +40,7 @@ Built on **advertools** (parsing) + **pandas** (aggregation) + **Plotly** (chart
 | **Response Codes** | Counts by status code + time-series by class (2xx/3xx/4xx/5xx) |
 | **User Agents** | Per-UA crawl breakdown + **bot verification** (real Googlebot/Bingbot vs spoofers) |
 | **Compare Bots** | Crawl footprint of each bot side by side + top-URLs × bot coverage matrix (who hits what, who skips what) |
+| **Compare Periods** | Two date ranges side by side — event/bot/URL/status deltas with % change and top movers |
 | **Referers** | Referrer breakdown |
 | **Directories** | Crawl rolled up by top-level path |
 | **IPs** | Per-IP event + byte counts |
