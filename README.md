@@ -101,10 +101,19 @@ format, and optionally enable bot verification / geolocation (slower — they hi
 
 ## Log formats
 
-Built-in: NCSA **common**, **combined**, **common_with_vhost**.
-Extras: **combined_time** (combined + trailing response time in µs — the sample format),
+Apache/Nginx (NCSA): **common**, **combined**, **common_with_vhost**,
+**combined_time** (combined + response time in µs — the sample format),
 **combined_msec** (combined + response time in ms).
-Or pick **custom** and supply a named-group regex + field list (W3C, CDN logs, etc.).
+
+Beyond NCSA — parsed natively, no regex needed:
+
+| Format | Source | Notes |
+|--------|--------|-------|
+| **cloudflare** | Cloudflare Logpush (HTTP requests) | newline-delimited JSON, PascalCase fields; handles epoch-ns / unix / RFC3339 timestamps |
+| **json** | Nginx `json_log`, Filebeat, k8s | one JSON object per line; resolves common key aliases (`remote_addr`, `http_user_agent`, `request_time`, …) |
+| **w3c** | IIS / W3C Extended | space-delimited with `#Fields:` header; decodes `+`-encoded user agents; `time-taken` in ms |
+
+Still something else? Pick **custom** and supply a named-group regex + field list.
 
 ## Sample data
 
